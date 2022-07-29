@@ -50,12 +50,13 @@ const float d = 1.;
 export vec4 Plotter(optional<std::Texture2d> gradient, vec4 color, float thickness) {
   
   vec2 uv = std::getVertexTexCoord();
+  uv.y = 1.- uv.y;
   float curve = gradient.sample(uv).valueOr(std::gradientHorizontal(uv).xxx1).x;
   vec2 lineWidth = thickness / std::getRenderTargetSize();
   vec2 sm = smoothstep(uv.yy, curve - lineWidth, curve + lineWidth);
-  vec4 line = step(sm.xxxx, .0001) * color;
+  float line = step(sm.x, .00001);
 
-  return mix(line.xyz, curve.xxx, sm.x).xyz1;
+  return mix(curve.xxx, vec3(line, line, line) * color.xyz, line).xyz1;
 }
 
 float getT(float t){

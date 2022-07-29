@@ -1,0 +1,257 @@
+/**********************************************************************
+  TERMS OF USE - EASING EQUATIONS
+  Open source under the BSD License.
+  Copyright (c) 2001 Robert Penner
+  JavaScript version copyright (C) 2006 by Philippe Maegerman
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are
+  met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+
+  * Neither the name of the author nor the names of contributors may
+    be used to endorse or promote products derived from this software
+    without specific prior written permission.
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*****************************************/
+
+precision highp float;
+
+const float PI = 3.14159;
+const float b = 0.;
+const float c = 1.;
+const float d = 1.;
+#import <blending>
+#import <gradients>
+
+// Entry point of the shader code asset
+//
+// @param[default=#008000FF] color
+// @param[default=1.0,min=0.0,max=10.0] thickness
+// @return color
+export vec4 Plotter(optional<std::Texture2d> gradient, vec4 color, float thickness) {
+  
+  vec2 uv = std::getVertexTexCoord();
+  float curve = gradient.sample(uv).valueOr(std::gradientHorizontal(uv).xxx1).x;
+  vec2 lineWidth = thickness / std::getRenderTargetSize();
+  vec2 sm = smoothstep(uv.yy, curve - lineWidth, curve + lineWidth);
+  vec4 line = step(sm.xxxx, .0001) * color;
+
+  return mix(line.xyz, curve.xxx, sm.x).xyz1;
+}
+
+float getT(float t){
+  if(t == 0.){
+    vec2 uv = std::getVertexTexCoord();
+    return std::gradientHorizontal(uv);
+  }
+  else return t;
+}
+
+export float CubicIn(float t) {
+  t = getT(t);
+  return c * (t /= d) * t * t + b;
+}
+export float CubicOut(float t) {
+  t = getT(t);
+  return c * ((t = t / d - 1.) * t * t + 1.) + b;
+}
+export float CubicInOut(float t) {
+  t = getT(t);
+  if ((t /= d / 2.) < 1.)
+    return c / 2. * t * t * t + b;
+  return c / 2. * ((t -= 2.) * t * t + 2.) + b;
+}
+
+export float QuadIn(float t) {  
+  t = getT(t);
+  return c * (t /= d) * t + b;
+}
+export float QuadOut(float t) {
+  t = getT(t);
+  return -c * (t /= d) * (t - 2.) + b;
+}
+export float QuadInOut(float t) {
+  t = getT(t);
+  if ((t /= d / 2.) < 1.)
+    return c / 2. * t * t + b;
+  return -c / 2. * ((--t) * (t - 2.) - 1.) + b;
+}
+
+export float QuartIn(float t) {
+  t = getT(t);
+  return c * (t /= d) * t * t * t + b;
+}
+export float QuartOut(float t) {
+  t = getT(t);
+  return -c * ((t = t / d - 1.) * t * t * t - 1.) + b;
+}
+export float QuartInOut(float t) {
+  t = getT(t);
+  if ((t /= d / 2.) < 1.)
+    return c / 2. * t * t * t * t + b;
+  return -c / 2. * ((t -= 2.) * t * t * t - 2.) + b;
+}
+
+export float QuintIn(float t) {
+  t = getT(t);
+  return c * (t /= d) * t * t * t * t + b;
+}
+export float QuintOut(float t) {
+  t = getT(t);
+  return c * ((t = t / d - 1.) * t * t * t * t + 1.) + b;
+}
+export float QuintInOut(float t) {
+  t = getT(t);
+  if ((t /= d / 2.) < 1.)
+    return c / 2. * t * t * t * t * t + b;
+  return c / 2. * ((t -= 2.) * t * t * t * t + 2.) + b;
+}
+
+export float ExpoIn(float t) {
+  t = getT(t);
+	return (t == 0.) ? b : c * pow(2., 10. * (t / d - 1.)) + b;
+}
+export float ExpoOut(float t) {
+  t = getT(t);
+  return (t == d) ? b + c : c * (-pow(2., -10. * t / d) + 1.) + b;
+}
+export float ExpoInOut(float t) {
+  t = getT(t);
+  if (t == 0.)
+    return b;
+  if (t == d)
+    return b + c;
+  if ((t /= d / 2.) < 1.)
+    return c / 2. * pow(2., 10. * (t - 1.)) + b;
+  return c / 2. * (-pow(2., -10. * --t) + 2.) + b;
+}
+
+export float SineIn(float t) {
+  t = getT(t);
+  return -c * cos(t / d * (PI / 2.)) + c + b; 
+}
+
+export float SineOut(float t) {
+  t = getT(t);
+  return c * sin(t / d * (PI / 2.)) + b;
+}
+
+export float SineInOut(float t) {
+  t = getT(t);
+  return -c / 2. * (cos(PI * t / d) - 1.) + b;
+}
+
+float _BounceOut(float t) {
+  if ((t /= d) < (1. / 2.75)) {
+    return c * (7.5625 * t * t) + b;
+  } else if (t < (2. / 2.75)) {
+    return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
+  } else if (t < (2.5 / 2.75)) {
+    return c * (7.5625 * (t -= (2.25 / 2.75)) * t + .9375) + b;
+  } else {
+    return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
+  } 
+}
+export float BounceIn(float t) {
+  t = getT(t);
+  return c - _BounceOut(d - t) + b;
+}
+export float BounceOut(float t) {
+  t = getT(t);
+  return _BounceOut(t);
+}
+export float BounceInOut(float t) {
+  t = getT(t);
+  if (t < d / 2.)
+    return BounceIn(t * 2.) * .5 + b;
+  else
+    return BounceOut(t * 2. - d) * .5 + c * .5 + b;
+}
+
+export float BackIn(float t) {
+  t = getT(t);
+  float s = 1.70158;
+  return c * (t /= d) * t * ((s + 1.) * t - s) + b;
+}
+export float BackOut(float t) {
+  t = getT(t);
+  float s = 1.70158;
+  return c * ((t = t / d - 1.) * t * ((s + 1.) * t + s) + 1.) + b;
+}
+export float BackInOut(float t) {
+  t = getT(t);
+  float s = 1.70158;
+  if ((t /= d / 2.) < 1.)
+    return c / 2. * (t * t * (((s *= (1.525)) + 1.) * t - s)) + b;
+  return c / 2. * ((t -= 2.) * t * (((s *= (1.525)) + 1.) * t + s) + 2.) + b;
+}
+
+export float CircIn(float t) {
+  t = getT(t);
+  return -c * (sqrt(1. - (t /= d) * t) - 1.) + b;
+}
+export float CircOut(float t) {
+  t = getT(t);
+  return c * sqrt(1. - (t = t / d - 1.) * t) + b;
+}
+export float CircInOut(float t) {
+  t = getT(t);
+  if ((t /= d / 2.) < 1.)
+    return -c / 2. * (sqrt(1. - t * t) - 1.) + b;
+  return c / 2. * (sqrt(1. - (t -= 2.) * t) + 1.) + b;
+}
+
+export float ElasticIn(float t) { 
+  t = getT(t);
+  if (t == 0.)
+    return b;
+  if ((t /= d) == 1.)
+    return b + c;
+  float p = d * .3;
+  float a = c;
+  float s = p / 4.;
+  return -(a * pow(2., 10. * (t -= 1.)) * sin((t * d - s) * (2. * PI) / p)) + b;
+}
+export float ElasticOut(float t) {
+  t = getT(t);
+  if (t == 0.)
+    return b;
+  if ((t /= d) == 1.)
+    return b + c;
+  float p = d * .3;
+  float a = c;
+  float s = p / 4.;
+  return (a * pow(2., -10. * t) * sin((t * d - s) * (2. * PI) / p) + c + b);
+}
+export float ElasticInOut(float t) {
+  t = getT(t);
+  if (t == 0.)
+    return b;
+  if ((t /= d / 2.) == 2.)
+    return b + c;
+  float p = d * (.3 * 1.5);
+  float a = c;
+  float s = p / 4.;
+  if (t < 1.)
+    return -.5 * (a * pow(2., 10. * (t -= 1.)) * sin((t * d - s) * (2. * PI) / p)) + b;
+  return a * pow(2., -10. * (t -= 1.)) * sin((t * d - s) * (2. * PI) / p) * .5 + c + b;
+}
